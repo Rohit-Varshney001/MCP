@@ -12,7 +12,8 @@ public class WeatherByCityTool implements Tool {
         return Map.of(
                 "name", "weather.getByCity",
                 "description", "Fetch weather by city name",
-                "input_schema", Map.of(
+                // MCP spec expects camelCase key name
+                "inputSchema", Map.of(
                         "type", "object",
                         "properties", Map.of(
                                 "city", Map.of("type", "string")

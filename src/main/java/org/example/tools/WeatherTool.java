@@ -14,7 +14,8 @@ public class WeatherTool implements Tool {
         return Map.of(
                 "name", "get_weather",
                 "description", "Fetch weather information. Can get weather by city name, coordinates (latitude/longitude), or for a random city. If no parameters provided, returns random city weather.",
-                "input_schema", Map.of(
+                // MCP spec expects camelCase key name
+                "inputSchema", Map.of(
                         "type", "object",
                         "properties", Map.of(
                                 "city", Map.of(
@@ -42,7 +43,7 @@ public class WeatherTool implements Tool {
         // Check if city is provided
         if (arguments.has("city") && !arguments.get("city").isNull()) {
             String city = arguments.get("city").asText();
-            String url = "http://localhost:8080/api/weather/city/" + city;
+            String url = "http://localhost:8080/weather/" + city;
             return Map.of(
                     "type", "city",
                     "query", city,
@@ -55,7 +56,7 @@ public class WeatherTool implements Tool {
                 && !arguments.get("latitude").isNull() && !arguments.get("longitude").isNull()) {
             double lat = arguments.get("latitude").asDouble();
             double lon = arguments.get("longitude").asDouble();
-            String url = "http://localhost:8080/api/weather/coords?lat=" + lat + "&lon=" + lon;
+            String url = "http://localhost:8080/weather/coords?lat=" + lat + "&lon=" + lon;
             return Map.of(
                     "type", "coordinates",
                     "latitude", lat,
@@ -66,7 +67,7 @@ public class WeatherTool implements Tool {
 
         // Default: Random city
         String randomCity = randomCities.get(new Random().nextInt(randomCities.size()));
-        String url = "http://localhost:8080/api/weather/city/" + randomCity;
+        String url = "http://localhost:8080/weather/" + randomCity;
         return Map.of(
                 "type", "random",
                 "city", randomCity,

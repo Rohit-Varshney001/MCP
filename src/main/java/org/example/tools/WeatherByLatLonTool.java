@@ -13,7 +13,8 @@ public class WeatherByLatLonTool implements Tool {
         return Map.of(
                 "name", "weather.getByLatLon",
                 "description", "Fetch weather by latitude & longitude",
-                "input_schema", Map.of(
+                // MCP spec expects camelCase key name
+                "inputSchema", Map.of(
                         "type", "object",
                         "properties", Map.of(
                                 "latitude", Map.of("type", "number"),
