@@ -4,9 +4,13 @@ package org.example.mcp;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.example.tools.Tool;
-import org.example.tools.WeatherByCityTool;
-import org.example.tools.WeatherByLatLonTool;
-import org.example.tools.WeatherRandomTool;
+// Old approach - individual tools (commented out, kept for reference)
+// import org.example.tools.WeatherByCityTool;
+// import org.example.tools.WeatherByLatLonTool;
+// import org.example.tools.WeatherRandomTool;
+
+// New approach - unified weather tool
+import org.example.tools.WeatherTool;
 
 import java.util.*;
 
@@ -16,9 +20,13 @@ public class ToolRegistry {
     private final ObjectMapper mapper = new ObjectMapper();
 
     public ToolRegistry() {
-        tools.put("weather.getByCity", new WeatherByCityTool());
-        tools.put("weather.getByLatLon", new WeatherByLatLonTool());
-        tools.put("weather.random", new WeatherRandomTool());
+        // Old approach - three separate tools (commented out, kept for reference)
+        // tools.put("weather.getByCity", new WeatherByCityTool());
+        // tools.put("weather.getByLatLon", new WeatherByLatLonTool());
+        // tools.put("weather.random", new WeatherRandomTool());
+
+        // New approach - single unified weather tool
+        tools.put("get_weather", new WeatherTool());
     }
 
     public int getToolCount() {
@@ -47,7 +55,15 @@ public class ToolRegistry {
             JsonNode arguments = params.get("arguments");
             Object result = tool.run(arguments);
 
-            return JsonRpcMessage.success(id, Map.of("output", result));
+            // Return proper MCP content format
+            return JsonRpcMessage.success(id, Map.of(
+                    "content", List.of(
+                            Map.of(
+                                    "type", "text",
+                                    "text", mapper.writeValueAsString(result)
+                            )
+                    )
+            ));
 
         } catch (Exception e) {
             return JsonRpcMessage.error(id, -32603, "Tool execution error: " + e.getMessage());
