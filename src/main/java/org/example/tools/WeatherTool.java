@@ -1,13 +1,11 @@
 package org.example.tools;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import org.example.mcp.Utils;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 public class WeatherTool implements Tool {
-
-    private final List<String> randomCities = List.of("Delhi", "London", "Tokyo", "New York", "Mumbai");
 
     @Override
     public Map<String, Object> getSchema() {
@@ -92,131 +90,47 @@ public class WeatherTool implements Tool {
 
         // ===== Inventory endpoints =====
         if (arguments.has("sku") && !arguments.get("sku").isNull()) {
-            String sku = arguments.get("sku").asText();
-
-            boolean reorder = arguments.has("reorderSuggestion")
-                    && !arguments.get("reorderSuggestion").isNull()
-                    && arguments.get("reorderSuggestion").asBoolean();
-
-            if (reorder) {
-                String url = "http://localhost:8080/apps/inventory/reorder-suggestion?sku=" + sku;
-                return Map.of(
-                        "type", "inventory_reorder_suggestion",
-                        "sku", sku,
-                        "data", Utils.httpGet(url)
-                );
-            } else {
-                int lookaheadDays = 30;
-                if (arguments.has("lookaheadDays") && !arguments.get("lookaheadDays").isNull()) {
-                    lookaheadDays = arguments.get("lookaheadDays").asInt();
-                }
-                String url = "http://localhost:8080/apps/inventory/forecast?sku=" + sku + "&lookaheadDays=" + lookaheadDays;
-                return Map.of(
-                        "type", "inventory_forecast",
-                        "sku", sku,
-                        "lookaheadDays", lookaheadDays,
-                        "data", Utils.httpGet(url)
-                );
-            }
+            return InventoryHandlers.handle(arguments);
         }
 
         // ===== Churn endpoints =====
         if (arguments.has("customerId") && !arguments.get("customerId").isNull()) {
-            String customerId = arguments.get("customerId").asText();
-            String url = "http://localhost:8080/apps/churn/risk?customerId=" + customerId;
-            return Map.of(
-                    "type", "churn_risk",
-                    "customerId", customerId,
-                    "data", Utils.httpGet(url)
-            );
+            return ChurnHandlers.handleRisk(arguments);
         }
 
         if (arguments.has("cohortId") && !arguments.get("cohortId").isNull()) {
-            String cohortId = arguments.get("cohortId").asText();
-            String url = "http://localhost:8080/apps/churn/cohort/" + cohortId;
-            return Map.of(
-                    "type", "churn_cohort",
-                    "cohortId", cohortId,
-                    "data", Utils.httpGet(url)
-            );
+            return ChurnHandlers.handleCohort(arguments);
         }
 
         // ===== Sales endpoints =====
         if (arguments.has("product") || arguments.has("region") || arguments.has("scenario")) {
-            String region = "global";
-            if (arguments.has("region") && !arguments.get("region").isNull()) {
-                region = arguments.get("region").asText();
-            }
-
             if (arguments.has("scenario") && !arguments.get("scenario").isNull()) {
-                String scenario = arguments.get("scenario").asText();
-                String url = "http://localhost:8080/apps/sales/simulate?scenario=" + scenario + "&region=" + region;
-                return Map.of(
-                        "type", "sales_simulation",
-                        "scenario", scenario,
-                        "region", region,
-                        "data", Utils.httpGet(url)
-                );
+                return SalesHandlers.handleSimulation(arguments);
             } else {
-                String product = "all-products";
-                if (arguments.has("product") && !arguments.get("product").isNull()) {
-                    product = arguments.get("product").asText();
-                }
-                String url = "http://localhost:8080/apps/sales/forecast?product=" + product + "&region=" + region;
-                return Map.of(
-                        "type", "sales_forecast",
-                        "product", product,
-                        "region", region,
-                        "data", Utils.httpGet(url)
-                );
+                return SalesHandlers.handleForecast(arguments);
             }
         }
 
         // ===== Weather endpoints =====
-        // Check if forecast is requested with city
-        boolean isForecast = arguments.has("forecast") && !arguments.get("forecast").isNull() && arguments.get("forecast").asBoolean();
+        boolean isForecast = arguments.has("forecast")
+                && !arguments.get("forecast").isNull()
+                && arguments.get("forecast").asBoolean();
+
         if (isForecast && arguments.has("city") && !arguments.get("city").isNull()) {
-            String city = arguments.get("city").asText();
-            String url = "http://localhost:8080/weather/" + city + "/forecast";
-            return Map.of(
-                    "type", "forecast",
-                    "city", city,
-                    "forecast", Utils.httpGet(url)
-            );
+            return WeatherHandlers.handleForecast(arguments);
         }
 
-        // Check if city is provided
         if (arguments.has("city") && !arguments.get("city").isNull()) {
-            String city = arguments.get("city").asText();
-            String url = "http://localhost:8080/weather/" + city;
-            return Map.of(
-                    "type", "city",
-                    "query", city,
-                    "weather", Utils.httpGet(url)
-            );
+            return WeatherHandlers.handleCity(arguments);
         }
 
-        // Check if coordinates are provided
         if (arguments.has("latitude") && arguments.has("longitude")
-                && !arguments.get("latitude").isNull() && !arguments.get("longitude").isNull()) {
-            double lat = arguments.get("latitude").asDouble();
-            double lon = arguments.get("longitude").asDouble();
-            String url = "http://localhost:8080/weather/coords?lat=" + lat + "&lon=" + lon;
-            return Map.of(
-                    "type", "coordinates",
-                    "latitude", lat,
-                    "longitude", lon,
-                    "weather", Utils.httpGet(url)
-            );
+                && !arguments.get("latitude").isNull()
+                && !arguments.get("longitude").isNull()) {
+            return WeatherHandlers.handleCoords(arguments);
         }
 
         // Default: Random city
-        String randomCity = randomCities.get(new Random().nextInt(randomCities.size()));
-        String url = "http://localhost:8080/weather/" + randomCity;
-        return Map.of(
-                "type", "random",
-                "city", randomCity,
-                "weather", Utils.httpGet(url)
-        );
+        return WeatherHandlers.handleRandom();
     }
 }
