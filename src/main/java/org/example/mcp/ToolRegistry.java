@@ -9,8 +9,9 @@ import org.example.tools.Tool;
 // import org.example.tools.WeatherByLatLonTool;
 // import org.example.tools.WeatherRandomTool;
 
-// New approach - unified weather tool
+//  unified weather tool + MEM tool
 import org.example.tools.WeatherTool;
+import org.example.tools.MemTool;
 
 import java.util.*;
 
@@ -25,8 +26,9 @@ public class ToolRegistry {
         // tools.put("weather.getByLatLon", new WeatherByLatLonTool());
         // tools.put("weather.random", new WeatherRandomTool());
 
-        // New approach - single unified weather tool
-        tools.put("get_weather", new WeatherTool());
+        // New approach - unified weather tool + MEM tool
+//        tools.put("get_weather", new WeatherTool());
+        tools.put("MEM", new MemTool());
     }
 
     public int getToolCount() {
